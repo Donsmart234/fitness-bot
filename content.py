@@ -16,9 +16,9 @@ MEAL_IDEAS = {
               "Jollof rice + fish + plantain", "Boiled yam with beans porridge + fish"],
     "snack2": ["A cup of milk + bread or biscuits", "Boiled corn + groundnut", "Avocado on bread", "Banana + groundnut",
                "Roasted corn + coconut or groundnut"],
-    "dinner": ["Eba with egusi soup + meat or fish", "Amala with vegetable soup + fish",
-               "Spaghetti with eggs and vegetables", "Eba with okra soup + meat",
-               "Semo with egusi + fish", "Spaghetti with fish sauce + egg"],
+    "dinner": ["Spaghetti with eggs and vegetables", "Noodles (Indomie) with 2 eggs + a cup of milk",
+               "Rice and beans + fish or egg", "Bread + fried eggs + a cup of milk",
+               "Jollof rice + egg + plantain", "Beans and bread + a cup of milk"],
     "milk": ["A cup of warm milk (powdered milk is fine)"],
 }
 
