@@ -12,7 +12,7 @@ from store import Store
 TZ = ZoneInfo("Africa/Lagos")
 DAY_START_H = 4            # a "plan day" runs 04:00 -> 04:00 local, so after-midnight logs count to the day before
 DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-DEFAULTS = {"wake": "07:00", "bed": "23:00", "workout_days": [0, 2, 4, 5], "workout_time": "17:00",
+DEFAULTS = {"creatine": True, "wake": "07:00", "bed": "23:00", "workout_days": [0, 2, 4, 5], "workout_time": "17:00",
             "water_goal": 8, "paused": False}
 GRACE_MIN = 25             # a reminder that was due more than this long ago (bot asleep / redeploy) is skipped
 
@@ -80,6 +80,8 @@ def build_schedule(day: date, settings: dict) -> list[dict]:
             n += 1
         m += 105
     add("posture", "am", wake + 45)
+    if settings.get("creatine"):
+        add("creatine", "am", wake + 35)
     if day.weekday() in settings["workout_days"]:
         wt = parse_hm(settings["workout_time"])
         if wt < wake:
@@ -230,6 +232,7 @@ class Tracker:
             "meal_texts": [x.get("text") for x in r if x["type"] == "meal" and x.get("text")],
             "workout": any(x["type"] == "workout" for x in r),
             "posture": any(x["type"] == "posture" for x in r),
+            "creatine": any(x["type"] == "creatine" for x in r),
             "slept": any(x["type"] == "sleep" for x in r),
         }
 
@@ -255,6 +258,8 @@ class Tracker:
                  f"🍽 Meals: {s['meals']}/6  {meals}",
                  f"🏋️ Workout: " + ("done ✅" if s["workout"] else ("not yet" if is_wday else "rest day")),
                  f"🧍 Posture: " + ("done ✅" if s["posture"] else "not yet")]
+        if self.settings.get("creatine"):
+            lines.append("🥄 Creatine: " + ("taken ✅" if s["creatine"] else "not yet"))
         w = await self.last_weight()
         if w:
             lines.append(f"⚖️ Last weight: {w[0]:g} kg ({w[1]})")
@@ -316,6 +321,8 @@ class Tracker:
         if day.weekday() in self.settings["workout_days"]:
             (good if s["workout"] else todo).append("🏋️ workout")
         (good if s["posture"] else todo).append("🧍 posture")
+        if self.settings.get("creatine"):
+            (good if s["creatine"] else todo).append("🥄 creatine")
         msg = ["🌆 Evening recap"]
         if good:
             msg.append("Nice: " + ", ".join(good))

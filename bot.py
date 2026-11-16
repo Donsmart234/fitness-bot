@@ -21,7 +21,7 @@ log = logging.getLogger("bot")
 COMMANDS = [
     ("today", "Today's water, meals, workout"), ("week", "Weekly summary + streaks"),
     ("water", "Log a glass of water"), ("ate", "Log a meal: /ate rice and beans"),
-    ("workout", "Open the workout (demos + timer)"), ("posture", "Posture session"),
+    ("workout", "Open the workout (demos + timer)"), ("posture", "Posture session"), ("creatine", "Creatine: log it, guide, on/off"),
     ("weight", "Log weight: /weight 52.5"), ("meals", "Today's meal ideas"),
     ("sleep", "Set bed + wake: /sleep 23:00 07:00"), ("workoutdays", "Set days: /workoutdays mon wed fri sat"),
     ("workouttime", "Set workout time: /workouttime 5pm"), ("settings", "Your schedule"),
@@ -79,6 +79,8 @@ async def reminder_text(t: Tracker, item: dict) -> str:
         return f"{C.MEAL_EMOJI[slot]} {C.MEAL_NAMES[slot]} time!\nIdea: {idea}\n{tail}"
     if kind == "posture":
         return C.posture_text(t.week())
+    if kind == "creatine":
+        return C.CREATINE_REMINDER
     if kind == "workout":
         return "⏰ Workout time!\n" + C.routine_text(t.week(), t.state["bests"])
     if kind == "recap":
@@ -141,7 +143,7 @@ async def keepalive_loop():
 # ---------------------------------------------------------------- commands
 HELP = ("Here's what I do:\n"
         "💧 /water – log a glass\n🍽 /ate rice and beans – log a meal\n"
-        "🏋️ /workout – demos + rep counter + rest timer\n🧍 /posture – bar hang + wall stand\n"
+        "🏋️ /workout – demos + rep counter + rest timer\n🧍 /posture – bar hang + wall stand\n🥄 /creatine – log it · /creatine guide · /creatine on|off\n"
         "⚖️ /weight 52.5 – log your weight\n📅 /today · 📊 /week\n🍛 /meals – today's meal ideas\n"
         "😴 /sleep 23:00 07:00 – set bed and wake time\n📆 /workoutdays mon wed fri sat · /workouttime 5pm\n"
         "⚙️ /settings · ⏸ /pause · ▶️ /resume\n\n"
@@ -241,6 +243,23 @@ async def cmd_workout(update: Update, ctx):
         kb = InlineKeyboardMarkup([[InlineKeyboardButton("▶️ Start workout", web_app=WebAppInfo(app_url("?s=workout")))],
                                    [InlineKeyboardButton("✅ Already did it", callback_data="w|done")]])
     await update.message.reply_text(C.routine_text(t.week(), t.state["bests"]), reply_markup=kb)
+
+
+@owner_only
+async def cmd_creatine(update: Update, ctx):
+    t = tracker(ctx)
+    arg = (ctx.args[0].lower() if ctx.args else "")
+    if arg in ("on", "off"):
+        async with t.lock:
+            t.settings["creatine"] = arg == "on"
+            await t.save()
+        await update.message.reply_text("🥄 Creatine reminder " + ("ON, daily after breakfast." if arg == "on" else "OFF."))
+        return
+    if arg in ("guide", "how", "help"):
+        await update.message.reply_text(C.CREATINE_GUIDE)
+        return
+    await t.log("creatine", text="taken")
+    await update.message.reply_text("🥄 Creatine logged ✅ Drink an extra glass of water today.\n/creatine guide for how to take it.")
 
 
 @owner_only
@@ -352,6 +371,11 @@ async def on_text(update: Update, ctx):
     m = WEIGHT_RE.search(text)
     if m:
         return await log_weight(update, t, float((m.group("kg") or m.group("kg2")).replace(",", ".")))
+    if re.search(r"\bcreatine\b", text, re.I) and not re.search(r"\b(how|guide|what)\b", text, re.I):
+        await t.log("creatine", text="logged by message")
+        return await update.message.reply_text("🥄 Creatine logged ✅ Drink an extra glass of water today.")
+    if re.search(r"\bcreatine\b", text, re.I):
+        return await update.message.reply_text(C.CREATINE_GUIDE)
     if WORKOUT_RE.search(text):
         await t.log("workout", text="logged by message")
         return await update.message.reply_text("🏋️ Workout logged! Proud of you 💪")
@@ -390,6 +414,8 @@ async def on_button(update: Update, ctx):
             await t.log(kind, text="marked done", key=key)
         elif kind == "sleep":
             await t.log("sleep", key=key)
+        elif kind == "creatine":
+            await t.log("creatine", key=key)
         t.drop_snooze(key)
         await q.answer("Logged ✅")
         foot = f"✅ Done at {stamp}"
@@ -430,7 +456,7 @@ async def post_init(app: Application):
 def register(app: Application):
     for name, fn in [("start", cmd_start), ("help", cmd_help), ("today", cmd_today), ("week", cmd_week),
                      ("water", cmd_water), ("ate", cmd_ate), ("weight", cmd_weight), ("workout", cmd_workout),
-                     ("posture", cmd_posture), ("meals", cmd_meals), ("settings", cmd_settings),
+                     ("posture", cmd_posture), ("creatine", cmd_creatine), ("meals", cmd_meals), ("settings", cmd_settings),
                      ("sleep", cmd_sleep), ("workoutdays", cmd_workoutdays), ("workouttime", cmd_workouttime),
                      ("pause", cmd_pause), ("resume", cmd_resume)]:
         app.add_handler(CommandHandler(name, fn))

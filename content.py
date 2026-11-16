@@ -132,3 +132,18 @@ def routine_text(week: int, bests: dict) -> str:
 def posture_text(week: int) -> str:
     return (f"🧍 Posture: bar hang {target_label('hang', week)} + {target('wall', week)} s wall stand.\n"
             "Stand tall all day: shoulders back, chin tucked.")
+
+
+CREATINE_REMINDER = ("🥄 Creatine time! 3-5 g (1 small scoop) in water, milk or pap.\n"
+                     "Drink 1-2 extra glasses of water today.")
+
+CREATINE_GUIDE = """🥄 How to take creatine safely
+• Plain creatine monohydrate only. No 'mass' blends, no fat burners.
+• 3-5 g a day (about 1 level teaspoon). No loading phase needed.
+• Same time daily, with food (breakfast is easy). Mix in water, milk or pap.
+• Take it every day, workout days and rest days.
+• Drink 2-3 L water a day (your water reminders cover it, plus 1-2 extra glasses).
+• You may gain 1-2 kg in the first weeks. That's water in your muscles, not fat. Good for your goal.
+• It doesn't stop you growing taller.
+• Stop and see a doctor if you get stomach upset that won't go, swelling, or have kidney problems.
+• Don't mix with energy drinks or other supplements you don't know."""
