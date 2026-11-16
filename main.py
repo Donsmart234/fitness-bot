@@ -58,6 +58,8 @@ async def run():
     health = lambda _r: web.Response(text="ok")
     web_app.router.add_get("/health", health)
     web_app.router.add_get("/", health)
+    web_app.router.add_get("/whoami", lambda _r: web.json_response(
+        {"username": app.bot.username if app.bot._bot_user else None, "owner": bool(tracker.owner)}))
     MiniApp(tracker, app.bot).register(web_app)
     sec = secret_token()
 
