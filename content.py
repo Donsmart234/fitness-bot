@@ -147,3 +147,39 @@ CREATINE_GUIDE = """🥄 How to take creatine safely
 • It doesn't stop you growing taller.
 • Stop and see a doctor if you get stomach upset that won't go, swelling, or have kidney problems.
 • Don't mix with energy drinks or other supplements you don't know."""
+
+
+# ---- Mini App guides (structured, shown in the Guides section) -------------------------------------------
+GUIDES = [
+    {"id": "posture", "emoji": "🧍", "title": "Posture: stand at your full height",
+     "intro": "Good posture won't change your bones, but slouching can hide 2-3 cm. Standing tall shows all of it.",
+     "points": ["Stand like the wall stand: ears over shoulders, shoulders over hips, chin slightly tucked.",
+                "Shoulders down and back, not up by your ears. Think 'proud chest', not 'stiff soldier'.",
+                "In class: sit back in the chair, feet flat, screen or book at eye level so your neck stays straight.",
+                "Phone up to your face instead of your head down to the phone ('text neck').",
+                "Bag on both shoulders, never one. Keep it light.",
+                "Every hour of sitting, stand up and stretch tall for 30 seconds.",
+                "Do the daily bar hang + wall stand: it trains your back muscles to hold you upright."]},
+    {"id": "sleep", "emoji": "😴", "title": "Sleep for growth",
+     "intro": "Your body releases most of its growth hormone in deep sleep. That's when muscle repairs and you recover.",
+     "points": ["Aim for 8-9 hours. Same bed and wake time every day, weekends too.",
+                "Screens away 30 minutes before bed. Phone on silent, away from your pillow.",
+                "Dark, cool, quiet room. A cloth over a light or a cheap sleep mask helps.",
+                "A cup of warm milk before bed: protein that feeds muscle while you sleep.",
+                "No coffee, energy drinks or cola after 2 pm.",
+                "Sleep on your back or side with a pillow that keeps your neck straight.",
+                "Honest note: at 19 most height is set by your genes and growth plates may be closing. Sleep, food and "
+                "posture make sure you reach everything you've got."]},
+    {"id": "creatine", "emoji": "🥄", "title": "Creatine, safely",
+     "intro": "Creatine monohydrate is one of the most studied supplements. It helps strength and muscle with training.",
+     "points": [line[2:] for line in CREATINE_GUIDE.splitlines() if line.startswith("• ")]},
+    {"id": "gain", "emoji": "🍛", "title": "Healthy weight gain",
+     "intro": "Gain about 0.25-0.5 kg a week. Faster usually means more fat, not muscle.",
+     "points": ["Eat 6 times a day. Missing meals is the #1 reason thin people stay thin.",
+                "Protein at every meal: eggs, beans, fish, chicken, milk, groundnut, moi moi.",
+                "Add easy calories: extra groundnut, milk in pap/custard/oats, avocado, plantain.",
+                "Drink water between meals, not a lot right before, so you have room to eat.",
+                "Train 3-4 times a week so the extra food builds muscle.",
+                "Weigh yourself once a week, same time (morning, after the toilet, before food).",
+                "Not gaining after 2 weeks? Add one more snack or a bigger portion at lunch."]},
+]

@@ -14,6 +14,8 @@ DAY_START_H = 4            # a "plan day" runs 04:00 -> 04:00 local, so after-mi
 DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 DEFAULTS = {"creatine": True, "wake": "07:00", "bed": "23:00", "workout_days": [0, 2, 4, 5], "workout_time": "17:00",
             "water_goal": 8, "paused": False}
+REMINDER_LABELS = {"water": "💧 Water", "posture": "🧍 Posture", "creatine": "🥄 Creatine", "workout": "🏋️ Workout",
+                   "recap": "🌆 Evening recap", "winddown": "🌙 Wind down", "sleep": "😴 Bed time"}
 GRACE_MIN = 25             # a reminder that was due more than this long ago (bot asleep / redeploy) is skipped
 
 
@@ -209,14 +211,14 @@ class Tracker:
         return rows
 
     async def last_weight(self) -> tuple[float, str] | None:
-        rows = await self.store.logs_since("2000-01-01")
+        rows = await self.store.logs_since("2000-01-01", types=("weight",))
         ws = [r for r in rows if r.get("type") == "weight"]
         if not ws:
             return None
         return float(ws[-1]["value"]), ws[-1]["day"]
 
     async def first_weight(self) -> float | None:
-        rows = await self.store.logs_since("2000-01-01")
+        rows = await self.store.logs_since("2000-01-01", types=("weight",))
         ws = [r for r in rows if r.get("type") == "weight"]
         return float(ws[0]["value"]) if ws else None
 
@@ -244,6 +246,78 @@ class Tracker:
         if not free:
             return ""
         return min(free, key=lambda s: abs((sched[s] - now).total_seconds()))
+
+    async def logs_of(self, *types: str) -> list[dict]:
+        return await self.store.logs_since("2000-01-01", types=types)
+
+    async def undo(self, type_: str, slot: str | None = None) -> bool:
+        """Delete the most recent log of this type (and meal slot, if given) from today's plan day."""
+        today = plan_day(now_local()).isoformat()
+        rows = [r for r in await self.logs(1) if r.get("day") == today and r.get("type") == type_ and
+                (slot is None or (r.get("slot") or "") == slot)]
+        if not rows or not rows[-1].get("_id"):
+            return False
+        await self.store.delete(rows[-1]["_id"])
+        self._logs_cache = None
+        return True
+
+    def next_reminder(self, now: datetime | None = None) -> dict | None:
+        now = now or now_local()
+        today = plan_day(now)
+        for d in (today, today + timedelta(days=1)):
+            for it in build_schedule(d, self.settings):
+                if due_at(it) > now:
+                    return {"kind": it["kind"], "slot": it["slot"], "at": due_at(it).strftime("%H:%M"),
+                            "label": REMINDER_LABELS.get(it["kind"], "Reminder") if it["kind"] != "meal"
+                            else C.MEAL_EMOJI[it["slot"]] + " " + C.MEAL_NAMES[it["slot"]],
+                            "time": fmt_hm(it["minute"]), "tomorrow": d != today}
+        return None
+
+    def workout_streak(self, rows, today: date) -> int:
+        """Planned workout days done in a row (rest days don't break it; today doesn't count until done)."""
+        start = date.fromisoformat(self.state.get("start_date") or today.isoformat())
+        n, d = 0, today
+        while d >= start and n < 400:
+            planned = d.weekday() in self.settings["workout_days"]
+            done = self.day_stats(rows, d.isoformat())["workout"]
+            if done:
+                n += 1
+            elif planned and d != today:
+                break
+            d -= timedelta(days=1)
+        return n
+
+    def apply_settings(self, patch: dict) -> dict:
+        """Validate a partial settings update from the Mini App. Raises ValueError with a friendly message."""
+        new = dict(self.settings)
+        for k in ("wake", "bed", "workout_time"):
+            if k in patch:
+                m = parse_hm(str(patch[k]))
+                if m is None:
+                    raise ValueError(f"Bad time for {k}")
+                new[k] = f"{m // 60:02d}:{m % 60:02d}"
+        if parse_hm(new["wake"]) == parse_hm(new["bed"]):
+            raise ValueError("Bed time and wake time can't be the same")
+        if "workout_days" in patch:
+            days = patch["workout_days"]
+            if not isinstance(days, list) or not all(isinstance(x, int) and 0 <= x <= 6 for x in days):
+                raise ValueError("Bad workout days")
+            new["workout_days"] = sorted(set(days))
+        if "water_goal" in patch:
+            try:
+                g = int(patch["water_goal"])
+            except (TypeError, ValueError):
+                raise ValueError("Bad water goal")
+            if not 4 <= g <= 20:
+                raise ValueError("Water goal must be 4-20 glasses")
+            new["water_goal"] = g
+        for k in ("creatine", "paused"):
+            if k in patch:
+                if not isinstance(patch[k], bool):
+                    raise ValueError(f"Bad value for {k}")
+                new[k] = patch[k]
+        self.state["settings"] = new
+        return new
 
     # ---- summaries ---------------------------------------------------------
     async def today_text(self) -> str:

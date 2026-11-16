@@ -101,16 +101,20 @@ class Store:
             raise RuntimeError(f"store unreachable: {self.last_error}")
         return self._load_local()["records"].get(rid)
 
-    async def list(self, kind: str, since: str | None = None, limit: int = 2000) -> list[dict]:
+    async def list(self, kind: str, since: str | None = None, limit: int = 2000,
+                   types: tuple[str, ...] | None = None) -> list[dict]:
         if self.remote:
             params = {"kind": f"eq.{kind}", "order": "created_at.asc", "limit": str(limit), "select": "*"}
             if since:
                 params["created_at"] = f"gte.{since}"
+            if types:
+                params["data->>type"] = f"in.({','.join(types)})"
             r = await self._http().get(f"/{TABLE}", params=params)
             r.raise_for_status()
             return r.json()
         rows = [r for r in self._load_local()["records"].values() if r["kind"] == kind and
-                (not since or r["created_at"] >= since)]
+                (not since or r["created_at"] >= since) and
+                (not types or (r.get("data") or {}).get("type") in types)]
         return sorted(rows, key=lambda r: r["created_at"])[:limit]
 
     async def delete(self, rid: str) -> None:
@@ -133,8 +137,8 @@ class Store:
         await self.save(rid, "fit_log", entry, created_at=entry.get("ts"))
         return rid
 
-    async def logs_since(self, since_iso: str) -> list[dict]:
-        rows = await self.list("fit_log", since=since_iso)
+    async def logs_since(self, since_iso: str, types: tuple[str, ...] | None = None) -> list[dict]:
+        rows = await self.list("fit_log", since=since_iso, types=types)
         out = []
         for r in rows:
             d = dict(r.get("data") or {})

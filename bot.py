@@ -443,7 +443,7 @@ async def set_menu(app: Application):
     try:
         await app.bot.set_my_commands([BotCommand(c, d) for c, d in COMMANDS])
         if app_url():
-            mb = MenuButtonWebApp("Workout", WebAppInfo(app_url()))
+            mb = MenuButtonWebApp("Open app", WebAppInfo(app_url()))
             await app.bot.set_chat_menu_button(chat_id=t.owner, menu_button=mb) if t.owner else None
     except TelegramError as e:
         log.warning("menu setup failed: %s", e)
