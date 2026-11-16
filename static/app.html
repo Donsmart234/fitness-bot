@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Workout</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:var(--tg-theme-bg-color,#0f1115); --card:var(--tg-theme-secondary-bg-color,#1a1d24);
+  --text:var(--tg-theme-text-color,#f3f4f6); --hint:var(--tg-theme-hint-color,#9ca3af);
+  --accent:#f97316; --accent2:#fb923c; --good:#22c55e; --demo:#111827;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{padding:14px 14px calc(100px + env(safe-area-inset-bottom))}
+h1{font-size:22px;margin:4px 0 2px}
+.sub{color:var(--hint);font-size:14px;margin-bottom:14px}
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tab{flex:1;padding:10px;border-radius:12px;background:var(--card);text-align:center;font-weight:600;color:var(--hint)}
+.tab.on{background:var(--accent);color:#fff}
+.card{background:var(--card);border-radius:16px;margin-bottom:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:10px}
+.thumb{width:96px;height:64px;border-radius:10px;background:var(--demo);object-fit:contain;flex:none}
+.name{font-weight:700}
+.label{color:var(--accent2);font-weight:600;font-size:14px}
+.chev{margin-left:auto;color:var(--hint);transition:transform .2s}
+.card.open .chev{transform:rotate(90deg)}
+.more{display:none;padding:0 14px 14px}
+.card.open .more{display:block}
+.more img{width:100%;border-radius:12px;background:var(--demo);margin-bottom:10px}
+.more ol{margin:0 0 8px;padding-left:20px}
+.more li{margin-bottom:4px}
+.tip{color:var(--hint);font-size:14px;margin-bottom:10px}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:15px;font-size:17px;font-weight:700;background:var(--accent);color:#fff}
+.btn.ghost{background:var(--card);color:var(--text)}
+.btn.small{padding:10px;font-size:15px}
+.link{background:none;border:0;color:var(--accent2);font-weight:600;font-size:15px;padding:4px 0}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 30%)}
+.done-badge{background:rgba(34,197,94,.15);color:var(--good);padding:8px 12px;border-radius:12px;font-weight:600;margin-bottom:12px;font-size:14px}
+/* session */
+#session{display:none;padding-top:4px}
+.prog{height:6px;background:var(--card);border-radius:3px;overflow:hidden;margin-bottom:12px}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.top{display:flex;justify-content:space-between;align-items:center;color:var(--hint);font-size:14px;margin-bottom:8px}
+.icon{background:var(--card);border:0;color:var(--text);border-radius:10px;padding:7px 10px;font-size:15px}
+.demo{width:100%;border-radius:16px;background:var(--demo);display:block;max-height:34vh;object-fit:contain}
+.exname{font-size:24px;font-weight:800;margin:12px 0 0;text-align:center}
+.setinfo{text-align:center;color:var(--hint);margin-bottom:6px}
+.ring{position:relative;width:min(58vw,230px);height:min(58vw,230px);margin:6px auto 10px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:12}
+.ring .bgc{stroke:var(--card)}
+.ring .fg{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.ring.rest .fg{stroke:var(--good)}
+.count{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.count b{font-size:64px;line-height:1;font-variant-numeric:tabular-nums}
+.count span{color:var(--hint);font-size:14px;margin-top:4px;text-align:center;padding:0 16px}
+.ctrls{display:flex;gap:10px;margin-bottom:10px}
+.ctrls .btn{flex:1}
+.adj{display:flex;justify-content:center;gap:14px;margin-bottom:10px}
+.adj button{width:52px;height:44px;border-radius:12px;border:0;background:var(--card);color:var(--text);font-size:22px;font-weight:700}
+.next{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:10px;margin-bottom:10px}
+.next img{width:72px;height:48px;border-radius:8px;background:var(--demo);object-fit:contain}
+#finish{display:none;text-align:center;padding-top:30px}
+#finish .big{font-size:64px}
+.sum{background:var(--card);border-radius:16px;padding:14px;text-align:left;margin:16px 0}
+.sum div{display:flex;justify-content:space-between;padding:4px 0}
+.err{color:#f87171;text-align:center;margin-top:40px}
+</style>
+</head>
+<body>
+<div id="home">
+  <h1 id="title">Your workout</h1>
+  <div class="sub" id="subtitle">Loading…</div>
+  <div class="tabs"><div class="tab on" data-t="workout">🏋️ Workout</div><div class="tab" data-t="posture">🧍 Posture</div></div>
+  <div id="doneBadge" class="done-badge" style="display:none"></div>
+  <div id="list"></div>
+  <div class="bar"><button class="btn" id="startBtn">▶ Start workout</button></div>
+</div>
+
+<div id="session">
+  <div class="prog"><i id="progBar"></i></div>
+  <div class="top"><button class="icon" id="quitBtn">✕</button><span id="exCount"></span>
+    <span><button class="icon" id="voiceBtn">🔊</button> <button class="icon" id="skipExBtn">Skip ⏭</button></span></div>
+  <img class="demo" id="demo" alt="">
+  <div class="exname" id="exName"></div>
+  <div class="setinfo" id="setInfo"></div>
+  <div class="ring" id="ring"><svg viewBox="0 0 120 120"><circle class="bgc" cx="60" cy="60" r="52"/><circle class="fg" id="fg" cx="60" cy="60" r="52"/></svg>
+    <div class="count"><b id="big">0</b><span id="small"></span></div></div>
+  <div class="adj" id="adj"><button id="minus">−</button><button id="plus">+</button></div>
+  <div class="next" id="nextBox" style="display:none"><img id="nextImg" alt=""><div><div class="tip" style="margin:0">Next</div><div class="name" id="nextName"></div></div></div>
+  <div class="ctrls"><button class="btn ghost" id="pauseBtn">⏸ Pause</button><button class="btn" id="mainBtn">Done set</button></div>
+  <button class="link" id="howBtn" style="width:100%">How to do it ▾</button>
+  <div id="howBox" class="more" style="padding:6px 4px"></div>
+</div>
+
+<div id="finish">
+  <div class="big">🏆</div>
+  <h1 id="finTitle">Workout complete!</h1>
+  <div class="sub" id="finSub"></div>
+  <div class="sum" id="finSum"></div>
+  <div class="sub" id="saveState">Saving…</div>
+  <button class="btn" id="closeBtn">Close</button>
+</div>
+
+<script>
+const tg = window.Telegram ? Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); try { tg.setHeaderColor('bg_color'); } catch(e){} }
+const $ = id => document.getElementById(id);
+const qs = new URLSearchParams(location.search);
+let PLAN = null, mode = qs.get('s') === 'posture' ? 'posture' : 'workout';
+const CIRC = 2 * Math.PI * 52;
+$('fg').style.strokeDasharray = CIRC;
+
+function haptic(type){ try{ if(!tg) return; if(type==='success'||type==='warning') tg.HapticFeedback.notificationOccurred(type); else tg.HapticFeedback.impactOccurred(type||'light'); }catch(e){} }
+let actx = null;
+function beep(freq=880, dur=0.12, vol=0.25){
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = freq; o.type='sine';
+    g.gain.setValueAtTime(vol, actx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+dur);
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+let voice = localStorage.getItem('voice') !== 'off';
+function say(t){ if(!voice || !window.speechSynthesis) return; try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(String(t)); u.rate=1.1; speechSynthesis.speak(u);}catch(e){} }
+function setVoiceBtn(){ $('voiceBtn').textContent = voice ? '🔊' : '🔇'; }
+$('voiceBtn').onclick = () => { voice = !voice; localStorage.setItem('voice', voice?'on':'off'); setVoiceBtn(); };
+setVoiceBtn();
+let wakeLock = null;
+async function keepAwake(on){ try{ if(on && navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); else if(!on && wakeLock){ await wakeLock.release(); wakeLock=null; } }catch(e){} }
+
+async function api(path, body={}){
+  const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({initData: tg ? tg.initData : '', ...body})});
+  const j = await r.json().catch(()=>({error:'Bad response'}));
+  if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+  return j;
+}
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function renderHome(){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.t === mode));
+  const items = PLAN[mode];
+  $('title').textContent = mode === 'workout' ? 'Your workout' : 'Posture session';
+  $('subtitle').textContent = mode === 'workout'
+    ? `Week ${PLAN.week} · ${PLAN.workout_day ? 'Workout day 💪' : 'Rest day (extra session is fine)'} · about 25 min`
+    : `Every day · stand tall · about 4 min`;
+  const done = PLAN.done[mode];
+  $('doneBadge').style.display = done ? 'block' : 'none';
+  $('doneBadge').textContent = done ? `✅ Already done today. Nice!` : '';
+  $('startBtn').textContent = mode === 'workout' ? '▶ Start workout' : '▶ Start posture';
+  $('list').innerHTML = items.map((e,i) => `
+    <div class="card" data-i="${i}">
+      <div class="row"><img class="thumb" src="${e.demo}" alt="">
+        <div><div class="name">${esc(e.name)}</div><div class="label">${esc(e.label)}</div></div><div class="chev">›</div></div>
+      <div class="more"><img src="${e.demo}" alt="${esc(e.name)} demo">
+        <ol>${e.how.map(h=>`<li>${esc(h)}</li>`).join('')}</ol>
+        ${e.easier ? `<div class="tip">💡 ${esc(e.easier)}</div>`:''}
+        <button class="link" data-video="${esc(e.video)}">▶ Watch a video tutorial</button></div>
+    </div>`).join('');
+  document.querySelectorAll('.card .row').forEach(r => r.onclick = () => r.parentElement.classList.toggle('open'));
+  document.querySelectorAll('[data-video]').forEach(b => b.onclick = ev => { ev.stopPropagation();
+    const u = b.dataset.video; if(tg && tg.openLink) tg.openLink(u); else window.open(u,'_blank'); });
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => { mode = t.dataset.t; renderHome(); });
+
+// ------------------------------------------------------------- session engine
+let S = null;   // {items, ei, set, results, phase, count, timer, remaining, total, paused, startedAt}
+function cur(){ return S.items[S.ei]; }
+function setRing(frac){ $('fg').style.strokeDashoffset = CIRC * (1 - Math.max(0, Math.min(1, frac))); }
+
+function start(){
+  beep(1,0.01,0.0001);  // unlock audio on the tap
+  S = {items: PLAN[mode], ei:0, set:1, results:{}, phase:null, count:0, t:null, paused:false, startedAt:Date.now()};
+  $('home').style.display='none'; $('session').style.display='block'; $('finish').style.display='none';
+  keepAwake(true); if(tg) tg.BackButton.show();
+  loadExercise();
+}
+$('startBtn').onclick = start;
+
+function loadExercise(){
+  const e = cur();
+  $('demo').src = e.demo; $('exName').textContent = e.name;
+  $('exCount').textContent = `Exercise ${S.ei+1} of ${S.items.length}`;
+  $('howBox').innerHTML = `<ol>${e.how.map(h=>`<li>${esc(h)}</li>`).join('')}</ol>${e.easier?`<div class="tip">💡 ${esc(e.easier)}</div>`:''}`;
+  $('howBox').style.display = 'none'; $('howBtn').textContent = 'How to do it ▾';
+  S.results[e.id] = S.results[e.id] || [];
+  getReady();
+}
+$('howBtn').onclick = () => { const o = $('howBox').style.display === 'block'; $('howBox').style.display = o?'none':'block'; $('howBtn').textContent = o?'How to do it ▾':'How to do it ▴'; };
+
+function updateProgress(){
+  const totalSets = S.items.reduce((a,e)=>a+e.sets,0);
+  let doneSets = 0; for(let i=0;i<S.ei;i++) doneSets += S.items[i].sets; doneSets += S.set-1;
+  $('progBar').style.width = (100*doneSets/totalSets)+'%';
+}
+
+function stopTimer(){ if(S && S.t){ clearInterval(S.t); S.t=null; } }
+
+function setInfoText(){
+  const e = cur();
+  let t = e.sets > 1 ? `Set ${S.set} of ${e.sets}` : '';
+  if(e.kind==='reps') t += ` · ${e.target} reps`;
+  if(e.kind==='reps_each') t += ` · ${e.target} each leg`;
+  if(e.kind==='max') t += e.best ? ` · as many as you can (best ${e.best})` : ' · as many as you can';
+  if(e.kind==='time') t += ` · hold ${e.target} s`;
+  $('setInfo').textContent = t.replace(/^ · /,'');
+}
+
+function getReady(){
+  stopTimer(); updateProgress(); setInfoText();
+  S.phase='ready'; S.remaining=3; $('ring').classList.remove('rest');
+  $('nextBox').style.display='none'; $('adj').style.display='none';
+  $('big').textContent='3'; $('small').textContent='Get ready'; setRing(1);
+  $('mainBtn').textContent='Go now'; $('pauseBtn').style.visibility='hidden';
+  beep(660); say('Get ready');
+  S.t = setInterval(()=>{ if(S.paused) return; S.remaining--; if(S.remaining<=0){ work(); return; }
+    $('big').textContent=S.remaining; setRing(S.remaining/3); beep(660); haptic('light'); }, 1000);
+}
+
+function work(){
+  stopTimer(); const e = cur(); S.phase='work'; S.count=0; S.paused=false;
+  $('pauseBtn').style.visibility='visible'; $('pauseBtn').textContent='⏸ Pause';
+  beep(1046,0.25); haptic('medium'); say('Go');
+  if(e.kind==='time'){
+    S.total=e.target; S.remaining=e.target; S.elapsed=0; $('adj').style.display='none';
+    $('big').textContent=S.remaining; $('small').textContent='seconds left'; setRing(1);
+    $('mainBtn').textContent='Stop'; 
+    S.t = setInterval(()=>{ if(S.paused) return; S.remaining--; S.elapsed++;
+      $('big').textContent=Math.max(0,S.remaining); setRing(S.remaining/S.total);
+      if(S.remaining<=3 && S.remaining>0){ beep(880); haptic('light'); }
+      if(S.remaining===Math.floor(S.total/2) && S.total>=20) say('Halfway');
+      if(S.remaining<=0) finishSet(S.total); }, 1000);
+  } else {
+    const each = e.kind==='reps_each'; const goal = e.kind==='max' ? 0 : (each ? e.target*2 : e.target);
+    S.goal = goal; $('adj').style.display='flex';
+    $('big').textContent='0'; $('small').textContent = e.kind==='max' ? 'Tap Done at your max' : (each?'Right leg first':`of ${goal}`);
+    setRing(goal?0:1); $('mainBtn').textContent='Done set';
+    S.t = setInterval(()=>{ if(S.paused) return; S.count++; showCount(true); }, e.tempo*1000);
+  }
+}
+
+function showCount(spoken){
+  const e = cur(); const each = e.kind==='reps_each';
+  if(each){ const side = S.count % 2 === 1 ? 'Right' : 'Left'; const per = Math.ceil(S.count/2);
+    $('big').textContent = per; $('small').textContent = `${S.count? side+' leg · ':''}${per} of ${e.target} each leg`;
+    if(spoken && S.count%2===1) say(per);
+  } else {
+    $('big').textContent = S.count;
+    if(e.kind==='reps') $('small').textContent = `of ${S.goal}`;
+    if(spoken) say(S.count);
+  }
+  if(S.goal) setRing(S.count/S.goal); else setRing(1);
+  if(spoken){ beep(S.count%5===0?990:740, 0.08); haptic('light'); }
+  if(S.goal && S.count>=S.goal) finishSet(each ? Math.floor(S.count/2) : S.count);
+}
+$('plus').onclick = () => { if(S.phase!=='work') return; S.count++; showCount(false); };
+$('minus').onclick = () => { if(S.phase!=='work'||S.count<=0) return; S.count--; showCount(false); };
+
+function finishSet(value){
+  stopTimer(); const e = cur();
+  S.results[e.id].push(value); haptic('success'); beep(1318,0.3);
+  if(S.set < e.sets){ S.set++; rest(e.rest, `${e.name} · set ${S.set} of ${e.sets}`, e.demo); }
+  else if(S.ei < S.items.length-1){ const n = S.items[S.ei+1]; S.ei++; S.set=1; rest(e.rest || 20, n.name, n.demo, true); }
+  else finishAll();
+}
+
+function rest(secs, nextName, nextImg, newEx){
+  S.phase='rest'; S.total=secs; S.remaining=secs; S.paused=false; S.newEx=newEx;
+  $('ring').classList.add('rest'); $('adj').style.display='none';
+  $('big').textContent=secs; $('small').textContent='Rest. Breathe 😮‍💨'; setRing(1);
+  $('nextBox').style.display='flex'; $('nextName').textContent=nextName; $('nextImg').src=nextImg;
+  $('mainBtn').textContent='Skip rest'; $('pauseBtn').textContent='+15 s'; $('pauseBtn').style.visibility='visible';
+  say(voice ? 'Rest' : '');
+  if(!newEx){ setInfoText(); } else { $('setInfo').textContent='Great work! Next exercise coming up'; }
+  updateProgress();
+  S.t = setInterval(()=>{ S.remaining--; $('big').textContent=Math.max(0,S.remaining); setRing(S.remaining/S.total);
+    if(S.remaining<=3 && S.remaining>0) beep(660);
+    if(S.remaining<=0) endRest(); }, 1000);
+}
+function endRest(){ stopTimer(); $('ring').classList.remove('rest'); if(S.newEx) loadExercise(); else getReady(); }
+
+$('mainBtn').onclick = () => {
+  if(!S) return;
+  if(S.phase==='ready'){ work(); }
+  else if(S.phase==='work'){ const e=cur();
+    if(e.kind==='time') finishSet(S.elapsed);
+    else finishSet(e.kind==='reps_each' ? Math.floor(S.count/2) : S.count); }
+  else if(S.phase==='rest'){ endRest(); }
+};
+$('pauseBtn').onclick = () => {
+  if(!S) return;
+  if(S.phase==='rest'){ S.remaining+=15; S.total=Math.max(S.total,S.remaining); $('big').textContent=S.remaining; return; }
+  S.paused = !S.paused; $('pauseBtn').textContent = S.paused ? '▶ Resume' : '⏸ Pause';
+  $('small').textContent = S.paused ? 'Paused' : ''; if(!S.paused) showCountOrTime();
+};
+function showCountOrTime(){ const e=cur(); if(e.kind==='time'){ $('small').textContent='seconds left'; } else showCount(false); }
+$('skipExBtn').onclick = () => { if(!S) return; stopTimer(); const e=cur();
+  if(S.ei < S.items.length-1){ S.ei++; S.set=1; loadExercise(); } else finishAll(); };
+
+function quit(){
+  if(!S) return; const any = Object.values(S.results).some(a=>a.length);
+  const leave = () => { stopTimer(); S=null; keepAwake(false); if(tg) tg.BackButton.hide();
+    $('session').style.display='none'; $('home').style.display='block'; };
+  if(!any){ leave(); return; }
+  const go = ok => { if(ok){ finishAll(); } else leave(); };
+  if(tg && tg.showPopup) tg.showPopup({title:'Stop workout?', message:'Save the sets you finished?',
+      buttons:[{id:'save',type:'default',text:'Save & finish'},{id:'discard',type:'destructive',text:'Discard'},{type:'cancel'}]},
+      id => { if(id==='save') go(true); else if(id==='discard') go(false); });
+  else go(confirm('Save the sets you finished?'));
+}
+$('quitBtn').onclick = quit;
+if(tg) tg.BackButton.onClick(quit);
+
+async function finishAll(){
+  stopTimer(); keepAwake(false); if(tg) tg.BackButton.hide();
+  const mins = Math.max(1, Math.round((Date.now()-S.startedAt)/60000));
+  $('session').style.display='none'; $('finish').style.display='block';
+  $('finTitle').textContent = mode==='workout' ? 'Workout complete!' : 'Posture done!';
+  $('finSub').textContent = `${mins} min · stronger than yesterday 💪`;
+  $('finSum').innerHTML = S.items.filter(e => (S.results[e.id]||[]).length).map(e => {
+    const u = e.kind==='time' ? ' s' : ''; return `<div><span>${esc(e.name)}</span><b>${S.results[e.id].map(x=>x+u).join(' / ')}</b></div>`; }).join('') || '<div>No sets recorded</div>';
+  haptic('success'); say('Workout complete. Great job!');
+  const results = {}; for(const [k,v] of Object.entries(S.results)) if(v.length) results[k]=v;
+  try { await api('/api/session', {kind: mode, results, minutes: mins}); $('saveState').textContent='✅ Saved to your log'; PLAN.done[mode]=true; }
+  catch(err){ $('saveState').textContent='⚠️ Could not save: '+err.message; }
+  S = null;
+}
+$('closeBtn').onclick = () => { if(tg) tg.close(); else { $('finish').style.display='none'; $('home').style.display='block'; renderHome(); } };
+
+(async () => {
+  try { PLAN = await api('/api/plan'); renderHome(); }
+  catch(err){ $('list').innerHTML = `<div class="err">${esc(err.message)}</div>`; $('subtitle').textContent=''; $('startBtn').style.display='none'; }
+})();
+</script>
+</body>
+</html>
