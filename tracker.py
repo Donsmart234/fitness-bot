@@ -245,6 +245,10 @@ class Tracker:
         free = [s for s in C.MEALS if s not in logged]
         if not free:
             return ""
+        # Prefer the earliest slot already due (within 3 h) that wasn't logged, e.g. a late lunch.
+        past = [s for s in free if timedelta(0) <= now - sched[s] <= timedelta(hours=3)]
+        if past:
+            return min(past, key=lambda s: sched[s])
         return min(free, key=lambda s: abs((sched[s] - now).total_seconds()))
 
     async def logs_of(self, *types: str) -> list[dict]:
