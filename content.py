@@ -7,14 +7,14 @@ MEAL_NAMES = {"breakfast": "Breakfast", "snack1": "Morning snack", "lunch": "Lun
 MEAL_EMOJI = {"breakfast": "🍳", "snack1": "🥜", "lunch": "🍛", "snack2": "🌽", "dinner": "🍲", "milk": "🥛"}
 
 MEAL_IDEAS = {
-    "breakfast": ["Pap with milk + akara + a banana", "Oats with milk + 2 boiled eggs + a banana",
+    "breakfast": ["Custard made thick with milk + 2 eggs + a banana", "Pap with milk + akara + a banana", "Oats with milk + 2 boiled eggs + a banana",
                   "Pap with milk + 2 fried eggs + a banana", "Oats with milk and groundnut + akara"],
-    "snack1": ["Bread with groundnut paste", "Garri soaked with milk and groundnut",
+    "snack1": ["Custard with extra milk + a handful of groundnut", "Bread with groundnut paste", "Garri soaked with milk and groundnut",
                "Bread + groundnut paste + a cup of milk", "Garri, milk, sugar and a handful of groundnut"],
     "lunch": ["Rice and beans + fish + fried plantain", "Yam with egg sauce + plantain",
               "Rice with moi moi + chicken", "Beans and plantain (dodo) + boiled egg",
               "Jollof rice + fish + plantain", "Boiled yam with beans porridge + fish"],
-    "snack2": ["Boiled corn + groundnut", "Avocado on bread", "Banana + groundnut",
+    "snack2": ["A cup of milk + bread or biscuits", "Boiled corn + groundnut", "Avocado on bread", "Banana + groundnut",
                "Roasted corn + coconut or groundnut"],
     "dinner": ["Eba with egusi soup + meat or fish", "Amala with vegetable soup + fish",
                "Spaghetti with eggs and vegetables", "Eba with okra soup + meat",
